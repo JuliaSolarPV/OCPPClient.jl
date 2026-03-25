@@ -11,6 +11,7 @@ using HTTP
 using JSON
 using Logging
 using OCPPData
+using PrecompileTools
 using UUIDs
 
 include("events.jl")
@@ -39,5 +40,7 @@ export OCPPTimeoutError, OCPPCallError
 export boot_notification, heartbeat, authorize
 export status_notification, start_transaction, stop_transaction
 export meter_values
+
+include("precompile.jl")
 
 end
