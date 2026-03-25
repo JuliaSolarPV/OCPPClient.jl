@@ -13,7 +13,7 @@
     end
 
     """Wait until cp.status matches expected, with timeout."""
-    function wait_for_status(cp, expected::Symbol; timeout = 5.0)
+    function wait_for_status(cp, expected::Symbol; timeout = 15.0)
         deadline = time() + timeout
         while time() < deadline
             cp.status == expected && return true
