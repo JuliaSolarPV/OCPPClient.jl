@@ -5,7 +5,7 @@ layers interact only through well-defined interfaces.
 
 ## Layer overview
 
-```
+```text
 ┌──────────────────────────────────────────────────────┐
 │  Convenience layer                                   │
 │  convenience.jl + convenience_v16.jl / _v201.jl     │
@@ -23,7 +23,7 @@ layers interact only through well-defined interfaces.
 │  charge_point.jl                                     │
 │  id, url, spec, status, handlers, listeners, …       │
 └──────────────────────────────────────────────────────┘
-```
+```text
 
 ## ChargePoint state (`charge_point.jl`)
 
@@ -52,10 +52,10 @@ using Julia multiple dispatch.
 
 `connect!(cp)` opens a WebSocket with the negotiated OCPP subprotocol:
 
-```
+```text
 cp.spec = V16.Spec()   →  subprotocol = "ocpp1.6"
 cp.spec = V201.Spec()  →  subprotocol = "ocpp2.0.1"
-```
+```text
 
 On success the status is set to `:connected` and a `Connected` event is emitted.
 If `reconnect = true`, the loop retries on disconnect.
@@ -75,14 +75,14 @@ If `reconnect = true`, the loop retries on disconnect.
 
 The receive loop runs inside `connect!`:
 
-```
+```text
 for raw_frame in ws
     msg = OCPPData.decode(raw_frame)
     if msg isa Call         → routing layer (_handle_server_call)
     if msg isa CallResult   → resolve pending channel, emit ResponseReceived
     if msg isa CallError    → resolve pending channel, emit ResponseReceived
 end
-```
+```text
 
 ## Routing layer (`routing.jl`)
 
@@ -121,7 +121,7 @@ on `cp.spec`:
 function boot_notification(cp::ChargePoint; kwargs...)
     return _boot_notification(cp.spec, cp; kwargs...)
 end
-```
+```text
 
 The private `_boot_notification(::V16.Spec, cp; ...)` and
 `_boot_notification(::V201.Spec, cp; ...)` implementations live in the version-specific

@@ -181,6 +181,7 @@ end
 ```
 
 The handler receives:
+
 - `cp` — the `ChargePoint`, so you can send further requests from the handler
 - `req` — a typed request struct (e.g., `OCPPData.V16.ResetRequest`)
 
