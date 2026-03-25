@@ -9,6 +9,7 @@ OCPPClient.jl is a Julia package for OCPP (Open Charge Point Protocol) client fu
 ## Common Commands
 
 ### Testing
+
 ```bash
 # Run all tests
 julia --project=. -e 'using Pkg; Pkg.test()'
@@ -21,17 +22,20 @@ julia --project=. -e 'using TestItemRunner; @run_package_tests verbose=true'
 ```
 
 ### Formatting
+
 ```bash
 # Format all Julia files (margin=92, indent=4, unix line endings)
 julia -e 'using JuliaFormatter; format(".")'
 ```
 
 ### Linting / Pre-commit
+
 ```bash
 pre-commit run --all-files
 ```
 
 ### Documentation
+
 ```bash
 # Build docs locally
 julia --project=docs docs/make.jl
