@@ -43,7 +43,7 @@ jobs:
         uses: julia-actions/cache@v2
       - name: Dev unregistered dependencies
         run: |
-          julia -e 'using Pkg; Pkg.develop(url="https://github.com/JuliaSolarPV/OCPPData.jl")'
+          julia --project=@. -e 'using Pkg; Pkg.develop(url="https://github.com/JuliaSolarPV/OCPPData.jl")'
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1

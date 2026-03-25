@@ -40,7 +40,7 @@ jobs:
         uses: julia-actions/cache@v2
       - name: Dev unregistered dependencies
         run: |
-          julia -e 'using Pkg; Pkg.develop(url="https://github.com/JuliaSolarPV/OCPPData.jl")'
+          julia --project=docs -e 'using Pkg; Pkg.develop(url="https://github.com/JuliaSolarPV/OCPPData.jl")'
       - name: Instantiate environment with development version of the package
         run: |
           julia --project=docs -e '
