@@ -79,3 +79,25 @@ end
     @test occursin("NotSupported", msg)
     @test occursin("Action not supported", msg)
 end
+
+@testitem "OCPPTimeoutError formats correctly" tags = [:unit, :fast] begin
+    using OCPPClient
+
+    e = OCPPTimeoutError("connection timed out")
+    buf = IOBuffer()
+    showerror(buf, e)
+    msg = String(take!(buf))
+    @test occursin("OCPPTimeoutError", msg)
+    @test occursin("connection timed out", msg)
+end
+
+@testitem "OCPPVersionError formats correctly" tags = [:unit, :fast] begin
+    using OCPPClient
+
+    e = OCPPVersionError("V16 only")
+    buf = IOBuffer()
+    showerror(buf, e)
+    msg = String(take!(buf))
+    @test occursin("OCPPVersionError", msg)
+    @test occursin("V16 only", msg)
+end

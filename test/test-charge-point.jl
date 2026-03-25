@@ -58,6 +58,33 @@ end
     @test length(cp.listeners) == 1
 end
 
+@testitem "subscribe! do-block syntax" tags = [:unit, :fast] setup = [CPHelpers] begin
+    using OCPPClient
+
+    cp = CPHelpers.make_cp()
+    events = []
+    subscribe!(cp) do event
+        push!(events, event)
+    end
+    @test length(cp.listeners) == 1
+end
+
+@testitem "_ws_protocol returns correct subprotocol" tags = [:unit, :fast] begin
+    using OCPPClient
+    using OCPPClient: _ws_protocol
+    using OCPPData
+
+    @test _ws_protocol(OCPPData.V16.Spec()) == "ocpp1.6"
+    @test _ws_protocol(OCPPData.V201.Spec()) == "ocpp2.0.1"
+end
+
+@testitem "send_call throws OCPPTimeoutError when not connected" tags = [:unit, :fast] begin
+    using OCPPClient
+
+    cp = ChargePoint("CP-DISCONNECTED", "ws://localhost:9000/ocpp"; reconnect = false)
+    @test_throws OCPPTimeoutError send_call(cp, "Heartbeat", Dict{String,Any}())
+end
+
 @testitem "_emit notifies listeners" tags = [:unit, :fast] setup = [CPHelpers] begin
     using OCPPClient
     using OCPPClient: _emit

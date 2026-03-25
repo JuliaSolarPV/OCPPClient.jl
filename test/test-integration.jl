@@ -284,3 +284,132 @@ end
         close(server)
     end
 end
+
+@testitem "Server CallError triggers OCPPCallError" tags = [:integration, :slow] setup =
+    [IntegrationSetup] begin
+    server = HTTP.WebSockets.listen!("127.0.0.1", 0) do ws
+        for raw in ws
+            msg = OCPPData.decode(String(raw))
+            if msg isa OCPPData.Call
+                err = OCPPData.CallError(
+                    msg.unique_id,
+                    "NotSupported",
+                    "Action not supported",
+                    Dict{String,Any}(),
+                )
+                HTTP.WebSockets.send(ws, OCPPData.encode(err))
+            end
+        end
+    end
+    port = get_port(server)
+
+    try
+        cp = ChargePoint("CP-ERR-001", "ws://127.0.0.1:$port"; reconnect = false)
+        conn_task = @async connect!(cp)
+        wait_for_status(cp, :connected)
+
+        ex = @test_throws OCPPCallError heartbeat(cp)
+        @test ex.value.error_code == "NotSupported"
+
+        disconnect!(cp)
+    finally
+        close(server)
+    end
+end
+
+@testitem "Unknown CallResult ID is warned and emits ResponseReceived" tags =
+    [:integration, :slow] setup = [IntegrationSetup] begin
+    server = HTTP.WebSockets.listen!("127.0.0.1", 0) do ws
+        sleep(0.3)
+        fake = OCPPData.CallResult("unknown-id-999", Dict{String,Any}())
+        HTTP.WebSockets.send(ws, OCPPData.encode(fake))
+        for _ in ws
+        end  # keep open
+    end
+    port = get_port(server)
+
+    try
+        cp = ChargePoint("CP-UNKRES-001", "ws://127.0.0.1:$port"; reconnect = false)
+        events = []
+        subscribe!(cp, e -> push!(events, e))
+
+        conn_task = @async connect!(cp)
+        wait_for_status(cp, :connected)
+        sleep(0.5)
+
+        @test any(e -> e isa ResponseReceived, events)
+
+        disconnect!(cp)
+    finally
+        close(server)
+    end
+end
+
+@testitem "Unknown CallError ID is warned and emits ResponseReceived" tags =
+    [:integration, :slow] setup = [IntegrationSetup] begin
+    server = HTTP.WebSockets.listen!("127.0.0.1", 0) do ws
+        sleep(0.3)
+        fake = OCPPData.CallError(
+            "unknown-id-888",
+            "InternalError",
+            "Oops",
+            Dict{String,Any}(),
+        )
+        HTTP.WebSockets.send(ws, OCPPData.encode(fake))
+        for _ in ws
+        end  # keep open
+    end
+    port = get_port(server)
+
+    try
+        cp = ChargePoint("CP-UNKERR-001", "ws://127.0.0.1:$port"; reconnect = false)
+        events = []
+        subscribe!(cp, e -> push!(events, e))
+
+        conn_task = @async connect!(cp)
+        wait_for_status(cp, :connected)
+        sleep(0.5)
+
+        @test any(e -> e isa ResponseReceived, events)
+
+        disconnect!(cp)
+    finally
+        close(server)
+    end
+end
+
+@testitem "Malformed message is skipped, CP continues processing" tags =
+    [:integration, :slow] setup = [IntegrationSetup] begin
+    server = HTTP.WebSockets.listen!("127.0.0.1", 0) do ws
+        HTTP.WebSockets.send(ws, "this is not valid json {{{{")
+        for raw in ws
+            msg = OCPPData.decode(String(raw))
+            if msg isa OCPPData.Call && msg.action == "Heartbeat"
+                HTTP.WebSockets.send(
+                    ws,
+                    OCPPData.encode(
+                        OCPPData.CallResult(
+                            msg.unique_id,
+                            Dict{String,Any}("currentTime" => "2024-01-01T00:00:00Z"),
+                        ),
+                    ),
+                )
+            end
+        end
+    end
+    port = get_port(server)
+
+    try
+        cp = ChargePoint("CP-MALFORM-001", "ws://127.0.0.1:$port"; reconnect = false)
+        conn_task = @async connect!(cp)
+        wait_for_status(cp, :connected)
+        sleep(0.3)
+
+        resp = heartbeat(cp)
+        @test resp isa OCPPData.V16.HeartbeatResponse
+
+        disconnect!(cp)
+    finally
+        close(server)
+    end
+end

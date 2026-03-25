@@ -49,6 +49,29 @@ end
     @test occursin("handler crashed", result.error_description)
 end
 
+@testitem "_response_type returns correct type for V16" tags = [:unit, :fast] begin
+    using OCPPClient
+    using OCPPClient: _response_type
+    using OCPPData
+
+    spec = OCPPData.V16.Spec()
+    @test _response_type(spec, "BootNotification") === OCPPData.V16.BootNotificationResponse
+    @test _response_type(spec, "Heartbeat") === OCPPData.V16.HeartbeatResponse
+    @test _response_type(spec, "Reset") === OCPPData.V16.ResetResponse
+end
+
+@testitem "_response_type returns correct type for V201" tags = [:unit, :fast] begin
+    using OCPPClient
+    using OCPPClient: _response_type
+    using OCPPData
+
+    spec = OCPPData.V201.Spec()
+    @test _response_type(spec, "BootNotification") ===
+          OCPPData.V201.BootNotificationResponse
+    @test _response_type(spec, "Heartbeat") === OCPPData.V201.HeartbeatResponse
+    @test _response_type(spec, "Reset") === OCPPData.V201.ResetResponse
+end
+
 @testitem "V201 handler dispatch returns CallResult" tags = [:unit, :fast] begin
     using OCPPClient
     using OCPPClient: _handle_server_call
