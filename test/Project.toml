@@ -1,5 +1,10 @@
 [deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+Sockets = "6462fe0b-24de-5631-8697-dd941f90decc"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 OCPPClient = "1ab4a031-0a20-52bf-b0ad-6a3bd01e82d0"
+OCPPData = "96fa3b67-1af3-5f07-99a6-8e4efc5edabb"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestItems = "1c621080-faea-4a02-84b6-bbd5e436b8fe"
 TestItemRunner = "f8b46487-2199-4994-9208-9a1283c18c0a"
@@ -7,3 +12,4 @@ TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [sources]
 OCPPClient = {path = ".."}
+OCPPData = {path = "../../OCPPData.jl"}
