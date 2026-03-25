@@ -189,3 +189,98 @@ end
         close(server)
     end
 end
+
+@testitem "V201 connect and send BootNotification" tags = [:integration, :slow] setup =
+    [IntegrationSetup] begin
+    server = HTTP.WebSockets.listen!("127.0.0.1", 0) do ws
+        for raw in ws
+            msg = OCPPData.decode(String(raw))
+            if msg isa OCPPData.Call
+                HTTP.WebSockets.send(
+                    ws,
+                    OCPPData.encode(
+                        OCPPData.CallResult(
+                            msg.unique_id,
+                            Dict{String,Any}(
+                                "currentTime" => "2024-01-01T00:00:00.000Z",
+                                "interval" => 300,
+                                "status" => "Accepted",
+                            ),
+                        ),
+                    ),
+                )
+            end
+        end
+    end
+    port = get_port(server)
+
+    try
+        cp = ChargePoint(
+            "CP-V201-001",
+            "ws://127.0.0.1:$port";
+            spec = OCPPData.V201.Spec(),
+            reconnect = false,
+        )
+
+        conn_task = @async connect!(cp)
+        @test wait_for_status(cp, :connected)
+
+        resp = boot_notification(
+            cp;
+            reason = OCPPData.V201.BootReasonPowerUp,
+            charging_station = OCPPData.V201.ChargingStation(;
+                model = "TestModel",
+                vendor_name = "TestVendor",
+            ),
+        )
+        @test resp isa OCPPData.V201.BootNotificationResponse
+        @test resp.status == OCPPData.V201.RegistrationAccepted
+        @test resp.interval == 300
+        @test cp.status == :booted
+
+        disconnect!(cp)
+        sleep(0.5)
+        @test cp.status == :disconnected
+    finally
+        close(server)
+    end
+end
+
+@testitem "V201 send Heartbeat" tags = [:integration, :slow] setup = [IntegrationSetup] begin
+    server = HTTP.WebSockets.listen!("127.0.0.1", 0) do ws
+        for raw in ws
+            msg = OCPPData.decode(String(raw))
+            if msg isa OCPPData.Call
+                HTTP.WebSockets.send(
+                    ws,
+                    OCPPData.encode(
+                        OCPPData.CallResult(
+                            msg.unique_id,
+                            Dict{String,Any}("currentTime" => "2024-01-01T00:00:00.000Z"),
+                        ),
+                    ),
+                )
+            end
+        end
+    end
+    port = get_port(server)
+
+    try
+        cp = ChargePoint(
+            "CP-V201-002",
+            "ws://127.0.0.1:$port";
+            spec = OCPPData.V201.Spec(),
+            reconnect = false,
+        )
+        conn_task = @async connect!(cp)
+        wait_for_status(cp, :connected)
+
+        resp = heartbeat(cp)
+        @test resp isa OCPPData.V201.HeartbeatResponse
+        @test resp.current_time == "2024-01-01T00:00:00.000Z"
+
+        disconnect!(cp)
+    finally
+        close(server)
+    end
+end

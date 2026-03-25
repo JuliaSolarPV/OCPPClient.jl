@@ -46,3 +46,11 @@ end
 function Base.showerror(io::IO, e::OCPPCallError)
     return print(io, "OCPPCallError: [", e.error_code, "] ", e.error_description)
 end
+
+struct OCPPVersionError <: Exception
+    msg::String
+end
+
+function Base.showerror(io::IO, e::OCPPVersionError)
+    return print(io, "OCPPVersionError: ", e.msg)
+end

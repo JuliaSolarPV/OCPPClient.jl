@@ -3,12 +3,17 @@ WebSocket transport: connect!, disconnect!, send_call, message loop,
 and auto-reconnect logic.
 """
 
-"""
-    _ws_protocol(spec::OCPPData.AbstractOCPPSpec)
+if OCPPData.ENABLE_V16
+    """
+        _ws_protocol(spec::OCPPData.AbstractOCPPSpec)
 
-Return the OCPP WebSocket sub-protocol string for the given spec.
-"""
-_ws_protocol(::OCPPData.V16.Spec) = "ocpp1.6"
+    Return the OCPP WebSocket sub-protocol string for the given spec.
+    """
+    _ws_protocol(::OCPPData.V16.Spec) = "ocpp1.6"
+end
+if OCPPData.ENABLE_V201
+    _ws_protocol(::OCPPData.V201.Spec) = "ocpp2.0.1"
+end
 
 """
     connect!(cp::ChargePoint)

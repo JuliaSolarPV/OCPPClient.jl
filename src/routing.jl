@@ -2,14 +2,26 @@
 Server-initiated call dispatch: incoming Call → handler → CallResult/CallError.
 """
 
-"""Look up the request type for an action based on the OCPP spec version."""
-function _request_type(::OCPPData.V16.Spec, action::String)
-    return OCPPData.V16.request_type(action)
+if OCPPData.ENABLE_V16
+    """Look up the request type for an action based on the OCPP spec version."""
+    function _request_type(::OCPPData.V16.Spec, action::String)
+        return OCPPData.V16.request_type(action)
+    end
+
+    """Look up the response type for an action based on the OCPP spec version."""
+    function _response_type(::OCPPData.V16.Spec, action::String)
+        return OCPPData.V16.response_type(action)
+    end
 end
 
-"""Look up the response type for an action based on the OCPP spec version."""
-function _response_type(::OCPPData.V16.Spec, action::String)
-    return OCPPData.V16.response_type(action)
+if OCPPData.ENABLE_V201
+    function _request_type(::OCPPData.V201.Spec, action::String)
+        return OCPPData.V201.request_type(action)
+    end
+
+    function _response_type(::OCPPData.V201.Spec, action::String)
+        return OCPPData.V201.response_type(action)
+    end
 end
 
 """

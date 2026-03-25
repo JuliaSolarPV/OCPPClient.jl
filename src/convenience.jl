@@ -1,10 +1,10 @@
 """
-Typed convenience methods for common OCPP actions. Each method constructs a
-typed request struct, converts to a Dict payload, calls `send_call`, and
-returns the typed response.
+Typed convenience methods for common OCPP actions. Each method dispatches to a
+version-specific implementation based on `cp.spec`. Version-specific
+implementations live in `convenience_v16.jl` and `convenience_v201.jl`.
 """
 
-# ── Helpers ──
+# ── Shared helpers ──
 
 """Convert a typed struct to a Dict{String,Any} payload with camelCase keys."""
 function _to_payload(obj)::Dict{String,Any}
@@ -41,145 +41,99 @@ function _send_typed(
     return _from_payload(ResponseT, result.payload)
 end
 
-# ── V16 Convenience Methods ──
+# ── Public dispatch layer ──
 
 """
-    boot_notification(cp; charge_point_vendor, charge_point_model, kwargs...)
+    boot_notification(cp; kwargs...)
 
-Send a BootNotification to the CSMS. Returns `BootNotificationResponse`.
+Send a BootNotification. Dispatches to V16 or V201 based on `cp.spec`.
+
+**V16 kwargs:** `charge_point_vendor::String`, `charge_point_model::String`
+
+**V201 kwargs:** `reason::OCPPData.V201.BootReason`,
+`charging_station::OCPPData.V201.ChargingStation`
 """
-function boot_notification(
-    cp::ChargePoint;
-    charge_point_vendor::String,
-    charge_point_model::String,
-    kwargs...,
-)
-    req = OCPPData.V16.BootNotificationRequest(;
-        charge_point_vendor = charge_point_vendor,
-        charge_point_model = charge_point_model,
-        kwargs...,
-    )
-    resp = _send_typed(cp, "BootNotification", req, OCPPData.V16.BootNotificationResponse)
-    if resp.status == OCPPData.V16.RegistrationAccepted
-        lock(cp.lock) do
-            cp.status = :booted
-        end
-    end
-    return resp
+function boot_notification(cp::ChargePoint; kwargs...)
+    return _boot_notification(cp.spec, cp; kwargs...)
 end
 
 """
     heartbeat(cp; timeout=30.0)
 
-Send a Heartbeat to the CSMS. Returns `HeartbeatResponse`.
+Send a Heartbeat. Returns a version-appropriate HeartbeatResponse.
 """
-function heartbeat(cp::ChargePoint; timeout::Float64 = 30.0)
-    req = OCPPData.V16.HeartbeatRequest()
-    return _send_typed(
-        cp,
-        "Heartbeat",
-        req,
-        OCPPData.V16.HeartbeatResponse;
-        timeout = timeout,
-    )
+function heartbeat(cp::ChargePoint; kwargs...)
+    return _heartbeat(cp.spec, cp; kwargs...)
 end
 
 """
-    authorize(cp; id_tag)
+    authorize(cp; kwargs...)
 
-Send an Authorize request. Returns `AuthorizeResponse`.
+Send an Authorize request.
+
+**V16 kwargs:** `id_tag::String`
+
+**V201 kwargs:** `id_token::OCPPData.V201.IdToken`
 """
-function authorize(cp::ChargePoint; id_tag::String)
-    req = OCPPData.V16.AuthorizeRequest(; id_tag = id_tag)
-    return _send_typed(cp, "Authorize", req, OCPPData.V16.AuthorizeResponse)
+function authorize(cp::ChargePoint; kwargs...)
+    return _authorize(cp.spec, cp; kwargs...)
 end
 
 """
-    status_notification(cp; connector_id, status, error_code, kwargs...)
+    status_notification(cp; kwargs...)
 
-Send a StatusNotification. Returns `StatusNotificationResponse`.
+Send a StatusNotification.
+
+**V16 kwargs:** `connector_id::Int`, `status::OCPPData.V16.ChargePointStatus`,
+`error_code::OCPPData.V16.ChargePointErrorCode`
+
+**V201 kwargs:** `connector_id::Int`, `connector_status::OCPPData.V201.ConnectorStatus`,
+`evse_id::Int`, `timestamp::String` (optional, defaults to now)
 """
-function status_notification(
-    cp::ChargePoint;
-    connector_id::Int,
-    status::OCPPData.V16.ChargePointStatus,
-    error_code::OCPPData.V16.ChargePointErrorCode,
-    kwargs...,
-)
-    req = OCPPData.V16.StatusNotificationRequest(;
-        connector_id = connector_id,
-        status = status,
-        error_code = error_code,
-        kwargs...,
-    )
-    return _send_typed(
-        cp,
-        "StatusNotification",
-        req,
-        OCPPData.V16.StatusNotificationResponse,
-    )
+function status_notification(cp::ChargePoint; kwargs...)
+    return _status_notification(cp.spec, cp; kwargs...)
 end
 
 """
-    start_transaction(cp; connector_id, id_tag, meter_start, timestamp,
-                      kwargs...)
+    start_transaction(cp; connector_id, id_tag, meter_start, timestamp, kwargs...)
 
-Send a StartTransaction. Returns `StartTransactionResponse`.
+Send a StartTransaction (V16 only). Throws `OCPPVersionError` for V201 — use
+`transaction_event` instead.
 """
-function start_transaction(
-    cp::ChargePoint;
-    connector_id::Int,
-    id_tag::String,
-    meter_start::Int,
-    timestamp::String = Dates.format(now(Dates.UTC), dateformat"yyyy-mm-ddTHH:MM:SS.sssZ"),
-    kwargs...,
-)
-    req = OCPPData.V16.StartTransactionRequest(;
-        connector_id = connector_id,
-        id_tag = id_tag,
-        meter_start = meter_start,
-        timestamp = timestamp,
-        kwargs...,
-    )
-    return _send_typed(cp, "StartTransaction", req, OCPPData.V16.StartTransactionResponse)
+function start_transaction(cp::ChargePoint; kwargs...)
+    return _start_transaction(cp.spec, cp; kwargs...)
 end
 
 """
     stop_transaction(cp; transaction_id, meter_stop, timestamp, kwargs...)
 
-Send a StopTransaction. Returns `StopTransactionResponse`.
+Send a StopTransaction (V16 only). Throws `OCPPVersionError` for V201 — use
+`transaction_event` instead.
 """
-function stop_transaction(
-    cp::ChargePoint;
-    transaction_id::Int,
-    meter_stop::Int,
-    timestamp::String = Dates.format(now(Dates.UTC), dateformat"yyyy-mm-ddTHH:MM:SS.sssZ"),
-    kwargs...,
-)
-    req = OCPPData.V16.StopTransactionRequest(;
-        transaction_id = transaction_id,
-        meter_stop = meter_stop,
-        timestamp = timestamp,
-        kwargs...,
-    )
-    return _send_typed(cp, "StopTransaction", req, OCPPData.V16.StopTransactionResponse)
+function stop_transaction(cp::ChargePoint; kwargs...)
+    return _stop_transaction(cp.spec, cp; kwargs...)
 end
 
 """
-    meter_values(cp; connector_id, meter_value, kwargs...)
+    meter_values(cp; kwargs...)
 
-Send MeterValues. Returns `MeterValuesResponse`.
+Send MeterValues.
+
+**V16 kwargs:** `connector_id::Int`, `meter_value::Vector{OCPPData.V16.MeterValue}`
+
+**V201 kwargs:** `evse_id::Int`, `meter_value::Vector{OCPPData.V201.MeterValue}`
 """
-function meter_values(
-    cp::ChargePoint;
-    connector_id::Int,
-    meter_value::Vector{OCPPData.V16.MeterValue},
-    kwargs...,
-)
-    req = OCPPData.V16.MeterValuesRequest(;
-        connector_id = connector_id,
-        meter_value = meter_value,
-        kwargs...,
-    )
-    return _send_typed(cp, "MeterValues", req, OCPPData.V16.MeterValuesResponse)
+function meter_values(cp::ChargePoint; kwargs...)
+    return _meter_values(cp.spec, cp; kwargs...)
+end
+
+"""
+    transaction_event(cp; event_type, seq_no, transaction_info, trigger_reason,
+                      timestamp, kwargs...)
+
+Send a TransactionEvent (V201 only). Throws `OCPPVersionError` for V16 — use
+`start_transaction`/`stop_transaction` instead.
+"""
+function transaction_event(cp::ChargePoint; kwargs...)
+    return _transaction_event(cp.spec, cp; kwargs...)
 end

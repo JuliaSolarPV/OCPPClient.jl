@@ -71,6 +71,15 @@ end
     @test events[1] isa Connected
 end
 
+@testitem "ChargePoint V201 spec" tags = [:unit, :fast] begin
+    using OCPPClient
+    using OCPPData
+
+    cp = ChargePoint("CP003", "ws://localhost:9000/ocpp"; spec = OCPPData.V201.Spec())
+    @test cp.spec isa OCPPData.V201.Spec
+    @test cp.status == :disconnected
+end
+
 @testitem "_emit handles listener errors" tags = [:unit, :fast] setup = [CPHelpers] begin
     using OCPPClient
     using OCPPClient: _emit

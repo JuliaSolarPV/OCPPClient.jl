@@ -48,3 +48,21 @@ end
     @test result.error_code == "InternalError"
     @test occursin("handler crashed", result.error_description)
 end
+
+@testitem "V201 handler dispatch returns CallResult" tags = [:unit, :fast] begin
+    using OCPPClient
+    using OCPPClient: _handle_server_call
+    using OCPPData
+
+    cp = ChargePoint("CP001", "ws://localhost:9000/ocpp"; spec = OCPPData.V201.Spec())
+    on!(cp, "Reset") do cp, req
+        return OCPPData.V201.ResetResponse(; status = OCPPData.V201.ResetAccepted)
+    end
+
+    call = OCPPData.Call("v201-1", "Reset", Dict{String,Any}("type" => "Immediate"))
+    result = _handle_server_call(cp, call)
+
+    @test result isa OCPPData.CallResult
+    @test result.unique_id == "v201-1"
+    @test result.payload["status"] == "Accepted"
+end
