@@ -16,9 +16,6 @@ PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 StructUtils = "ec057cc2-7a8d-4b58-b3b3-92acb9f63b42"
 UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
-[sources]
-OCPPData = { url = "https://github.com/JuliaSolarPV/OCPPData.jl" }
-
 [compat]
 HTTP = "1"
 JSON = "1.4"
