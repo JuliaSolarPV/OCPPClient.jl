@@ -15,6 +15,23 @@ if OCPPData.ENABLE_V201
     _ws_protocol(::OCPPData.V201.Spec) = "ocpp2.0.1"
 end
 
+_log_connect_error(id, url, e::EOFError) = nothing
+_log_connect_error(id, url, e::HTTP.WebSockets.WebSocketError) = nothing
+_log_connect_error(id, url, e::HTTP.ConnectError) =
+    @warn "Connection failed" id url reason = e.error
+function _log_connect_error(id, url, e::HTTP.RequestError)
+    ws_err = e.error
+    if ws_err isa HTTP.WebSockets.WebSocketError &&
+       ws_err.message isa HTTP.WebSockets.CloseFrameBody
+        @warn "WebSocket handshake rejected" id url code = ws_err.message.status reason =
+            ws_err.message.message
+    else
+        @error "Connection error" id url exception = (e, catch_backtrace())
+    end
+end
+_log_connect_error(id, url, e) =
+    @error "Connection error" id url exception = (e, catch_backtrace())
+
 """
     connect!(cp::ChargePoint)
 
@@ -39,9 +56,7 @@ function connect!(cp::ChargePoint)
                 _message_loop(cp, ws)
             end
         catch e
-            if !(e isa EOFError || e isa HTTP.WebSockets.WebSocketError)
-                @error "Connection error" exception = (e, catch_backtrace())
-            end
+            _log_connect_error(cp.id, url, e)
         end
 
         # Connection ended — clean up

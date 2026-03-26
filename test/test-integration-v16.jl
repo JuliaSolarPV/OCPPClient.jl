@@ -65,7 +65,8 @@ end
     end
 end
 
-@testitem "V16 status_notification" tags = [:integration, :slow] setup = [V16IntegrationSetup] begin
+@testitem "V16 status_notification" tags = [:integration, :slow] setup =
+    [V16IntegrationSetup] begin
     server, port = start_v16_mock_server()
     try
         cp = ChargePoint("CP-V16-S01", "ws://127.0.0.1:$port"; reconnect = false)
@@ -93,12 +94,7 @@ end
         conn_task = @async connect!(cp)
         wait_for_status_v16(cp, :connected)
 
-        resp = start_transaction(
-            cp;
-            connector_id = 1,
-            id_tag = "TAG001",
-            meter_start = 0,
-        )
+        resp = start_transaction(cp; connector_id = 1, id_tag = "TAG001", meter_start = 0)
         @test resp isa OCPPData.V16.StartTransactionResponse
         @test resp.transaction_id == 42
 

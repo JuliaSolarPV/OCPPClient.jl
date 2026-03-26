@@ -75,7 +75,8 @@ end
     end
 end
 
-@testitem "V201 status_notification" tags = [:integration, :slow] setup = [V201IntegrationSetup] begin
+@testitem "V201 status_notification" tags = [:integration, :slow] setup =
+    [V201IntegrationSetup] begin
     server, port = start_v201_mock_server()
     try
         cp = make_v201_cp(port; id = "CP-V201-S01")
@@ -96,7 +97,8 @@ end
     end
 end
 
-@testitem "V201 transaction_event" tags = [:integration, :slow] setup = [V201IntegrationSetup] begin
+@testitem "V201 transaction_event" tags = [:integration, :slow] setup =
+    [V201IntegrationSetup] begin
     server, port = start_v201_mock_server()
     try
         cp = make_v201_cp(port; id = "CP-V201-TE01")
