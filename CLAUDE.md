@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-OCPPClient.jl is a Julia package for OCPP (Open Charge Point Protocol) client functionality, owned by the JuliaSolarPV GitHub organization. Built from BestieTemplate.jl (strategy level 3). Requires Julia >= 1.10.
+OCPPClient.jl is a Julia package for OCPP (Open Charge Point Protocol) client functionality, owned by the JuliaSolarPV GitHub organization. Built from BestieTemplate.jl (strategy level 3). Requires Julia >= 1.12.
 
 ## Common Commands
 

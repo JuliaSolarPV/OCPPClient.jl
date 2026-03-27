@@ -21,8 +21,11 @@ HTTP = "1"
 JSON = "1.4"
 PrecompileTools = "1"
 StructUtils = "2.7"
-julia = "1.10"
+julia = "1.12"
 Dates = "1"
 Logging = "1"
 OCPPData = "0.1.0"
 UUIDs = "1"
+
+[sources]
+OCPPData = {url = "https://github.com/JuliaSolarPV/OCPPData.jl"}
